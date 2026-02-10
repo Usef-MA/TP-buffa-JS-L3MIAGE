@@ -63,6 +63,18 @@ export default class PlayState extends GameState {
         
         this.backgroundX1 = 0;
         this.backgroundX2 = 800; // Double background pour scroll infini
+
+        // Transition de niveau - NOUVEAU
+        this.isLevelTransition = false;
+        this.transitionTimer = 0;
+        this.transitionDuration = 2.5; // 2.5 secondes
+        this.nextLevel = 1;
+        
+        // Transition de background - NOUVEAU
+        this.backgroundTransitionProgress = 0;
+        this.backgroundTransitioning = false;
+        this.backgroundTransitionDuration = 1.5; // 1.5 secondes
+        this.previousLevel = 1;
     }
 
     enter() {
@@ -96,7 +108,11 @@ export default class PlayState extends GameState {
     }
 
     getRandomSpawnDelay() {
-        // Délai aléatoire entre obstacles, diminue avec le niveau
+        // Niveau EXTRÊME : spawn ultra rapide
+        if (this.level === 4) {
+            return 0.6 + Math.random() * 0.4; // Entre 0.6 et 1.0 secondes
+        }
+        
         const min = Math.max(1.0, this.minSpawnDelay - (this.level - 1) * 0.1);
         const max = Math.max(2.0, this.maxSpawnDelay - (this.level - 1) * 0.2);
         return min + Math.random() * (max - min);
@@ -104,6 +120,38 @@ export default class PlayState extends GameState {
 
     update(deltaTime) {
         if (!this.player) return;
+
+        // Gérer la transition de niveau - NOUVEAU
+        if (this.isLevelTransition) {
+            this.transitionTimer += deltaTime;
+            
+            // Pas de spawn d'obstacles pendant la transition
+            // Pas de update des entités pendant la transition
+            
+            if (this.transitionTimer >= this.transitionDuration) {
+                // Fin de la transition
+                this.isLevelTransition = false;
+                this.level = this.nextLevel;
+                this.transitionTimer = 0;
+                console.log('✅ Niveau', this.level, 'activé !');
+            }
+            
+            // On continue quand même à update le joueur et les obstacles existants
+            this.player.update(deltaTime);
+            this.obstacles.forEach(obstacle => {
+                obstacle.velocityX = -this.currentSpeed;
+                obstacle.update(deltaTime);
+            });
+            
+            // Background scrolling continue
+            this.backgroundX1 -= this.backgroundSpeed * deltaTime;
+            this.backgroundX2 -= this.backgroundSpeed * deltaTime;
+            
+            if (this.backgroundX1 <= -800) this.backgroundX1 = 800;
+            if (this.backgroundX2 <= -800) this.backgroundX2 = 800;
+            
+            return; // Skip le reste de l'update
+        }
 
         // Update joueur
         this.player.update(deltaTime);
@@ -154,9 +202,18 @@ export default class PlayState extends GameState {
         // Augmentation progressive de la vitesse
         this.currentSpeed += deltaTime * 5;
 
-        // Changement de niveau tous les 500 points
-        const newLevel = Math.floor(this.score / 500) + 1;
-        if (newLevel > this.level && newLevel <= 3) {
+        let newLevel;
+        if (this.score < 500) {
+            newLevel = 1;
+        } else if (this.score < 1000) {
+            newLevel = 2;
+        } else if (this.score < 1500) {
+            newLevel = 3;
+        } else {
+            newLevel = 4; // NIVEAU EXTREME
+        }
+        
+        if (newLevel > this.level && newLevel <= 4) {
             this.levelUp(newLevel);
         }
 
@@ -172,23 +229,46 @@ export default class PlayState extends GameState {
     draw(ctx) {
         const canvas = ctx.canvas;
 
-        // Background avec image selon le niveau - NOUVEAU
-        const currentBg = this.backgroundImages[this.level];
-        const bgLoaded = this.backgroundsLoaded[this.level];
+        // Transition fluide entre backgrounds - NOUVEAU SYSTÈME
+        if (this.backgroundTransitioning) {
+            this.backgroundTransitionProgress += 0.016 / this.backgroundTransitionDuration; // ~60fps
+            if (this.backgroundTransitionProgress >= 1) {
+                this.backgroundTransitioning = false;
+                this.backgroundTransitionProgress = 0;
+            }
+        }
+
+        // Dessiner les backgrounds avec transition
+        const currentLevel = this.isLevelTransition ? this.previousLevel : this.level;
+        const currentBg = this.backgroundImages[currentLevel];
+        const currentBgLoaded = this.backgroundsLoaded[currentLevel];
         
-        if (bgLoaded && currentBg) {
-            // Double background pour scroll infini
+        if (currentBgLoaded && currentBg) {
             ctx.drawImage(currentBg, this.backgroundX1, 0, 800, 400);
             ctx.drawImage(currentBg, this.backgroundX2, 0, 800, 400);
+            
+            // Overlay du nouveau background en fade-in
+            if (this.backgroundTransitioning && this.nextLevel <= 3) {
+                const nextBg = this.backgroundImages[this.nextLevel];
+                const nextBgLoaded = this.backgroundsLoaded[this.nextLevel];
+                
+                if (nextBgLoaded && nextBg) {
+                    ctx.save();
+                    ctx.globalAlpha = this.backgroundTransitionProgress;
+                    ctx.drawImage(nextBg, this.backgroundX1, 0, 800, 400);
+                    ctx.drawImage(nextBg, this.backgroundX2, 0, 800, 400);
+                    ctx.restore();
+                }
+            }
         } else {
-            // Fallback : gradient selon niveau
+            // Fallback gradients...
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
             
-            if (this.level === 1) {
+            if (currentLevel === 1) {
                 gradient.addColorStop(0, '#4a1a4a');
                 gradient.addColorStop(0.5, '#2d1b3d');
                 gradient.addColorStop(1, '#8b6f47');
-            } else if (this.level === 2) {
+            } else if (currentLevel === 2) {
                 gradient.addColorStop(0, '#2d1b5e');
                 gradient.addColorStop(0.5, '#5a3d7a');
                 gradient.addColorStop(1, '#d4691a');
@@ -200,16 +280,13 @@ export default class PlayState extends GameState {
             
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Motif de fond défilant (fallback)
             this.drawScrollingBackground(ctx);
         }
 
-        // Sol
+        // Sol, entités, etc.
         ctx.fillStyle = '#8b6f47';
         ctx.fillRect(0, 360, canvas.width, 40);
         
-        // Décoration sol (lignes)
         ctx.strokeStyle = '#6b5437';
         ctx.lineWidth = 2;
         for (let i = 0; i < 10; i++) {
@@ -220,7 +297,6 @@ export default class PlayState extends GameState {
             ctx.stroke();
         }
 
-        // Draw entités
         this.obstacles.forEach(obstacle => obstacle.draw(ctx));
         if (this.player) {
             this.player.draw(ctx);
@@ -228,6 +304,11 @@ export default class PlayState extends GameState {
 
         // HUD
         this.drawHUD(ctx);
+        
+        // Animation de transition de niveau - NOUVEAU
+        if (this.isLevelTransition) {
+            this.drawLevelTransition(ctx);
+        }
     }
 
     drawScrollingBackground(ctx) {
@@ -267,27 +348,31 @@ export default class PlayState extends GameState {
     drawHUD(ctx) {
         const canvas = ctx.canvas;
         
-        // Panel HUD semi-transparent
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fillRect(0, 0, canvas.width, 50);
 
         ctx.save();
-        
         ctx.font = 'bold 24px "Exo 2", Arial';
         
-        // Score (SANS VIRGULE)
         ctx.textAlign = 'left';
         ctx.fillStyle = '#ffffff';
         ctx.fillText(`Score: ${Math.floor(this.score)}`, 20, 32);
         
-        // Niveau
         ctx.textAlign = 'center';
-        ctx.fillStyle = '#d4af37';
-        ctx.fillText(`Niveau ${this.level}`, canvas.width / 2, 32);
         
-        // Vies
+        // Niveau avec style spécial pour niveau 4
+        if (this.level === 4) {
+            ctx.fillStyle = '#ff0000';
+            ctx.font = 'bold 26px "Exo 2", Arial';
+            ctx.fillText(`💀 EXTRÊME 💀`, canvas.width / 2, 32);
+        } else {
+            ctx.fillStyle = '#d4af37';
+            ctx.fillText(`Niveau ${this.level}`, canvas.width / 2, 32);
+        }
+        
         ctx.textAlign = 'right';
         ctx.fillStyle = '#e74c3c';
+        ctx.font = 'bold 24px "Exo 2", Arial';
         ctx.fillText(`❤️ × ${this.lives}`, canvas.width - 20, 32);
         
         ctx.restore();
@@ -295,8 +380,6 @@ export default class PlayState extends GameState {
 
     spawnObstacle() {
         const x = 800 + 50;
-        
-        // Varier les types d'obstacles selon le niveau
         const random = Math.random();
         
         if (this.level === 1) {
@@ -314,13 +397,24 @@ export default class PlayState extends GameState {
                 this.obstacles.push(obstacleFlying);
             }
             
-        } else {
+        } else if (this.level === 3) {
             // Niveau 3 : chaos ! (50% sol, 50% air)
             if (random < 0.5) {
                 const obstacle = new Obstacle(x, 300, this.currentSpeed);
                 this.obstacles.push(obstacle);
             } else {
                 const obstacleFlying = new ObstacleFlying(x, 180 + Math.random() * 60, this.currentSpeed);
+                this.obstacles.push(obstacleFlying);
+            }
+            
+        } else if (this.level === 4) {
+            // NIVEAU EXTRÊME : CHAOS TOTAL - NOUVEAU
+            // 40% sol, 60% air avec variations de hauteur
+            if (random < 0.4) {
+                const obstacle = new Obstacle(x, 300, this.currentSpeed);
+                this.obstacles.push(obstacle);
+            } else {
+                const obstacleFlying = new ObstacleFlying(x, 150 + Math.random() * 100, this.currentSpeed);
                 this.obstacles.push(obstacleFlying);
             }
         }
@@ -368,11 +462,20 @@ export default class PlayState extends GameState {
     }
 
     levelUp(newLevel) {
-        this.level = newLevel;
-        console.log('🎉 NIVEAU', this.level, '! Nouveau background chargé');
+        console.log('🎉 Transition vers niveau', newLevel, '!');
+        
+        // Démarrer la transition
+        this.isLevelTransition = true;
+        this.transitionTimer = 0;
+        this.nextLevel = newLevel;
+        this.previousLevel = this.level;
+        
+        // Démarrer transition de background
+        this.backgroundTransitioning = true;
+        this.backgroundTransitionProgress = 0;
         
         // Bonus de vie tous les 2 niveaux
-        if (this.level % 2 === 0 && this.lives < 5) {
+        if (newLevel % 2 === 0 && this.lives < 5) {
             this.lives++;
             console.log('❤️ Vie bonus !');
         }
@@ -398,5 +501,72 @@ export default class PlayState extends GameState {
 
     exit() {
         console.log('🚪 Sortie du Play State');
+    }
+
+    drawLevelTransition(ctx) {
+        const canvas = ctx.canvas;
+        const progress = this.transitionTimer / this.transitionDuration;
+        
+        // Overlay semi-transparent
+        ctx.save();
+        
+        // Fade in puis fade out
+        let alpha;
+        if (progress < 0.3) {
+            // Fade in rapide
+            alpha = progress / 0.3;
+        } else if (progress > 0.7) {
+            // Fade out
+            alpha = (1 - progress) / 0.3;
+        } else {
+            alpha = 1;
+        }
+        
+        ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.7})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Texte "NIVEAU X"
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Effet de scale (zoom in/out)
+        const scale = 1 + Math.sin(progress * Math.PI) * 0.3;
+        
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.scale(scale, scale);
+        
+        // Ombre
+        ctx.shadowColor = 'rgba(212, 175, 55, 0.8)';
+        ctx.shadowBlur = 20;
+        
+        // Texte principal
+        ctx.fillStyle = '#d4af37';
+        ctx.font = 'bold 72px "Exo 2", Arial';
+        
+        let levelText = `NIVEAU ${this.nextLevel}`;
+        if (this.nextLevel === 4) {
+            levelText = 'NIVEAU EXTRÊME';
+            ctx.fillStyle = '#ff0000';
+            ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
+        }
+        
+        ctx.fillText(levelText, 0, -30);
+        
+        // Sous-texte
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '24px "Exo 2", Arial';
+        
+        const messages = {
+            2: 'Obstacles volants !',
+            3: 'Ça chauffe !',
+            4: '💀 SURVIE 💀'
+        };
+        
+        ctx.fillText(messages[this.nextLevel] || '', 0, 30);
+        
+        ctx.restore();
+        ctx.restore();
     }
 }

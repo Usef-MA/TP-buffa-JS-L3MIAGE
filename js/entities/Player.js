@@ -1,4 +1,5 @@
 import Entity from './Entity.js';
+import ParticleSystem from '../effects/ParticleSystem.js'; 
 
 export default class Player extends Entity {
     constructor(x, y) {
@@ -24,6 +25,11 @@ export default class Player extends Entity {
         
         // États
         this.isDead = false;
+
+        // Système de particules - NOUVEAU
+        this.particleSystem = new ParticleSystem();
+        this.particleEmitTimer = 0;
+        this.particleEmitInterval = 0.05; // Émettre toutes les 50ms
     }
 
     jump() {
@@ -54,9 +60,28 @@ export default class Player extends Entity {
             this.isJumping = false;
             this.rotation = 0; // Reset rotation au sol
         }
+
+
+        // Émission de particules - NOUVEAU
+        this.particleEmitTimer += deltaTime;
+        if (this.particleEmitTimer >= this.particleEmitInterval) {
+            // Position derrière le joueur
+            const particleX = this.x + this.width / 2 - 15;
+            const particleY = this.y + this.height / 2;
+            
+            // Plus de particules en sautant
+            const count = this.isJumping ? 5 : 3;
+            this.particleSystem.emit(particleX, particleY, count, '#d4af37');
+            
+            this.particleEmitTimer = 0;
+        }
+        
+        // Update particules
+        this.particleSystem.update(deltaTime);
     }
 
     draw(ctx) {
+        this.particleSystem.draw(ctx);
         ctx.save();
         
         // BONNE PRATIQUE : translate vers position puis rotate
@@ -93,5 +118,7 @@ export default class Player extends Entity {
         this.rotation = 0;
         this.isJumping = false;
         this.isDead = false;
+        this.particleSystem.clear(); // ← NOUVEAU
+        this.particleEmitTimer = 0;
     }
 }
