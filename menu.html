@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maroc Runner - Menu</title>
+    <link rel="stylesheet" href="css/menu.css">
+</head>
+<body>
+    <div class="menu-container">
+        <div class="title-wrapper">
+            <h1 class="game-title">MAROC RUNNER</h1>
+            <p class="subtitle">Saute, glisse, altère !</p>
+        </div>
+
+        <div class="menu-buttons">
+            <button class="menu-btn play-btn" id="playBtn" onclick="window.location.href='game.html'">
+                <span class="btn-icon">▶</span>
+                JOUER
+            </button>
+            <button class="menu-btn" id="ScoreBtn" onclick="window.location.href='scores.html'">
+                <span class="btn-icon">⊞</span>
+                SCORE
+            </button>
+            <button class="menu-btn" id="optionsBtn" onclick="window.location.href='options.html'">
+                <span class="btn-icon">⚙</span>
+                OPTIONS
+            </button>
+            <button class="menu-btn" id="tutorialBtn" onclick="window.location.href='tutorial.html'">
+                <span class="btn-icon">?</span>
+                TUTORIEL
+            </button>
+        </div>
+
+        <div class="controls-hint">
+            <p><strong>ESPACE</strong> : Saut | <strong>SHIFT</strong> : Altération</p>
+        </div>
+    </div>
+    <script src="js/menu.js"></script>
+</body>
+</html>
