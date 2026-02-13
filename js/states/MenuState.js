@@ -12,12 +12,11 @@ export default class MenuState extends GameState {
         this.backgroundImageLoaded = false;
         this.backgroundImage.onload = () => {
             this.backgroundImageLoaded = true;
-            console.log('✅ Menu background chargé');
+            console.log('Menu background chargé');
         };
     }
 
     enter() {
-        console.log('📜 Menu State activé');
         this.titleAnimation = 0;
     }
 
@@ -56,7 +55,6 @@ export default class MenuState extends GameState {
         
         const titleY = 100 + Math.sin(this.titleAnimation) * 10;
         
-        // ← POLICE MODERNE ET GRANDE
         ctx.fillStyle = '#d4af37';
         ctx.font = 'bold 56px "Exo 2", Arial';
         ctx.fillText('MAROC RUNNER', canvas.width / 2, titleY);

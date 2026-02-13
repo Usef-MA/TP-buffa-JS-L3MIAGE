@@ -1,21 +1,19 @@
+import ParticleSystem from '../effects/ParticleSystem.js';
 import Entity from './Entity.js';
-import ParticleSystem from '../effects/ParticleSystem.js'; 
 
 export default class Player extends Entity {
     constructor(x, y) {
         super(x, y, 40, 40); 
         
-        // Propriétés du saut
         this.isJumping = false;
-        this.jumpForce = -700; // Force du saut (négatif = vers le haut)
-        this.gravity = 2200; // Gravité
-        this.groundY = 320; // Position du sol (400 - 40 - marge)
+        this.jumpForce = -700; // Saut normal
+        this.chargedJumpForce = -950; // Saut chargé
+        this.gravity = 2200;
+        this.groundY = 320;
         
-        // Animation
         this.rotation = 0;
-        this.rotationSpeed = 8; // Vitesse de rotation en rad/s
+        this.rotationSpeed = 8;
         
-        // Image
         this.image = new Image();
         this.image.src = 'assets/carre.png';
         this.imageLoaded = false;
@@ -23,72 +21,100 @@ export default class Player extends Entity {
             this.imageLoaded = true;
         };
         
-        // États
         this.isDead = false;
 
-        // Système de particules - NOUVEAU
         this.particleSystem = new ParticleSystem();
         this.particleEmitTimer = 0;
-        this.particleEmitInterval = 0.05; // Émettre toutes les 50ms
+        this.particleEmitInterval = 0.05;
+        
+        // Pour le saut chargé
+        this.isCharging = false;
     }
 
+    // Saut simple (appui court)
     jump() {
         if (!this.isJumping && !this.isDead) {
             this.velocityY = this.jumpForce;
             this.isJumping = true;
+            console.log('🔵 Saut normal');
+        }
+    }
+
+    // Commence à charger le saut
+    startCharging() {
+        if (!this.isJumping && !this.isDead) {
+            this.isCharging = true;
+        }
+    }
+
+    // Saut chargé (appui long)
+    chargedJump(chargeRatio) {
+        if (!this.isJumping && !this.isDead) {
+            // Interpole entre saut normal et saut chargé
+            const force = this.jumpForce + (this.chargedJumpForce - this.jumpForce) * chargeRatio;
+            this.velocityY = force;
+            this.isJumping = true;
+            this.isCharging = false;
+            console.log(`🟢 Saut chargé ${Math.round(chargeRatio * 100)}% (force: ${Math.round(force)})`);
         }
     }
 
     update(deltaTime) {
         if (this.isDead) return;
 
-        // Application de la gravité
         this.velocityY += this.gravity * deltaTime;
         
-        // Mise à jour position Y
-        this.y += this.velocityY * deltaTime;
+        super.update(deltaTime);
         
-        // Rotation pendant le saut
         if (this.isJumping) {
             this.rotation += this.rotationSpeed * deltaTime;
         }
         
-        // Collision avec le sol
-        if (this.y >= this.groundY) {
-            this.y = this.groundY;
-            this.velocityY = 0;
-            this.isJumping = false;
-            this.rotation = 0; // Reset rotation au sol
+        // Collision avec le sol/plafond
+        if (this.gravity > 0) {
+            if (this.y >= this.groundY) {
+                this.y = this.groundY;
+                this.velocityY = 0;
+                this.isJumping = false;
+                this.isCharging = false;
+                this.rotation = 0;
+            }
+        } else {
+            if (this.y <= this.groundY) {
+                this.y = this.groundY;
+                this.velocityY = 0;
+                this.isJumping = false;
+                this.isCharging = false;
+                this.rotation = 0;
+            }
         }
 
-
-        // Émission de particules - NOUVEAU
         this.particleEmitTimer += deltaTime;
         if (this.particleEmitTimer >= this.particleEmitInterval) {
-            // Position derrière le joueur
             const particleX = this.x + this.width / 2 - 15;
             const particleY = this.y + this.height / 2;
             
-            // Plus de particules en sautant
             const count = this.isJumping ? 5 : 3;
             this.particleSystem.emit(particleX, particleY, count, '#d4af37');
             
             this.particleEmitTimer = 0;
         }
         
-        // Update particules
         this.particleSystem.update(deltaTime);
     }
 
     draw(ctx) {
         this.particleSystem.draw(ctx);
+        
         ctx.save();
         
-        // BONNE PRATIQUE : translate vers position puis rotate
         ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
         ctx.rotate(this.rotation);
         
-        // Dessin en 0,0 (centré grâce au translate)
+        if (this.gravity < 0) {
+            ctx.scale(1, -1);
+        }
+        
         if (this.imageLoaded) {
             ctx.drawImage(
                 this.image,
@@ -98,9 +124,15 @@ export default class Player extends Entity {
                 this.height
             );
         } else {
-            // Fallback si image pas chargée
-            ctx.fillStyle = '#9b59b6'; // Violet
+            ctx.fillStyle = '#9b59b6';
             ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+        }
+        
+        // Indicateur de charge
+        if (this.isCharging) {
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(-this.width / 2 - 5, -this.height / 2 - 5, this.width + 10, this.height + 10);
         }
         
         ctx.restore();
@@ -108,7 +140,7 @@ export default class Player extends Entity {
 
     die() {
         this.isDead = true;
-        this.velocityY = -400; // Petit saut de mort
+        this.velocityY = -400;
     }
 
     reset() {
@@ -117,8 +149,11 @@ export default class Player extends Entity {
         this.velocityY = 0;
         this.rotation = 0;
         this.isJumping = false;
+        this.isCharging = false;
         this.isDead = false;
-        this.particleSystem.clear(); // ← NOUVEAU
+        this.gravity = 2200;
+        this.groundY = 320;
+        this.particleSystem.clear();
         this.particleEmitTimer = 0;
     }
 }

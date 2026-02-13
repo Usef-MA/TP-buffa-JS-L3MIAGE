@@ -1,168 +1,161 @@
-import GameState from './GameState.js';
-import Player from '../entities/Player.js';
 import Obstacle from '../entities/Obstacle.js';
 import ObstacleFlying from '../entities/ObstacleFlying.js';
+import Player from '../entities/Player.js';
+import GameState from './GameState.js';
+
+import ObstacleCeilingSpike from '../entities/ObstacleCeilingSpike.js';
+import ObstacleDoubleSpike from '../entities/ObstacleDoubleSpike.js';
+import ObstacleFlyingCarpet from '../entities/ObstacleFlyingCarpet.js';
+
+import ObstacleInvertedSpike from '../entities/ObstacleInvertedSpike.js';
+import ObstaclePendulumLantern from '../entities/ObstaclePendulumLantern.js';
+import ObstacleRotatingSword from '../entities/ObstacleRotatingSword.js';
+
+import ObstacleComplexPattern from '../entities/ObstacleComplexPattern.js';
+import ObstacleGravityPortal from '../entities/ObstacleGravityPortal.js';
+import ObstacleMovingWall from '../entities/ObstacleMovingWall.js';
+
+import ObstacleMirage from '../entities/ObstacleMirage.js';
+import ObstacleSandstorm from '../entities/ObstacleSandstorm.js';
+import ObstacleSpeedZone from '../entities/ObstacleSpeedZone.js';
+
+import LevelConfig from '../config/LevelConfig.js';
 
 export default class PlayState extends GameState {
     constructor(game) {
         super(game);
         
-        // Entités
         this.player = null;
         this.obstacles = [];
         
-        // Gameplay
         this.score = 0;
         this.lives = 3;
         this.level = 1;
         this.baseSpeed = 280;
         this.currentSpeed = this.baseSpeed;
         
-        // Spawn d'obstacles
         this.timeSinceLastObstacle = 0;
-        this.minSpawnDelay = 1.2; // Réduit pour plus d'action
+        this.minSpawnDelay = 1.2;
         this.maxSpawnDelay = 2.2;
         this.nextSpawnDelay = this.getRandomSpawnDelay();
         
-        // Background scrolling
         this.backgroundSpeed = 120;
-        
-        // Scoring
         this.distanceTraveled = 0;
         this.pointsPerMeter = 1;
     
-        // Backgrounds par niveau - NOUVEAU SYSTÈME
         this.backgroundImages = {
             1: new Image(),
             2: new Image(),
-            3: new Image()
+            3: new Image(),
+            4: new Image(),
+            5: new Image()
         };
         
         this.backgroundImages[1].src = 'assets/level1-bg.png';
         this.backgroundImages[2].src = 'assets/level2-bg.png';
         this.backgroundImages[3].src = 'assets/level3-bg.png';
+        this.backgroundImages[4].src = 'assets/level4-bg.png';
+        this.backgroundImages[5].src = 'assets/level5-bg.png';
         
         this.backgroundsLoaded = {
             1: false,
             2: false,
-            3: false
+            3: false,
+            4: false,
+            5: false
         };
         
-        this.backgroundImages[1].onload = () => {
-            this.backgroundsLoaded[1] = true;
-            console.log('✅ Level 1 background chargé');
-        };
-        this.backgroundImages[2].onload = () => {
-            this.backgroundsLoaded[2] = true;
-            console.log('✅ Level 2 background chargé');
-        };
-        this.backgroundImages[3].onload = () => {
-            this.backgroundsLoaded[3] = true;
-            console.log('✅ Level 3 background chargé');
-        };
+        Object.keys(this.backgroundImages).forEach(level => {
+            this.backgroundImages[level].onload = () => {
+                this.backgroundsLoaded[level] = true;
+                console.log(`✅ Level ${level} background chargé`);
+            };
+        });
         
         this.backgroundX1 = 0;
-        this.backgroundX2 = 800; // Double background pour scroll infini
+        this.backgroundX2 = 800;
 
-        // Transition de niveau - NOUVEAU
         this.isLevelTransition = false;
         this.transitionTimer = 0;
-        this.transitionDuration = 2.5; // 2.5 secondes
+        this.transitionDuration = 2.5;
         this.nextLevel = 1;
         
-        // Transition de background - NOUVEAU
         this.backgroundTransitionProgress = 0;
         this.backgroundTransitioning = false;
-        this.backgroundTransitionDuration = 1.5; // 1.5 secondes
+        this.backgroundTransitionDuration = 1.5;
         this.previousLevel = 1;
     }
 
     enter() {
-        console.log('🎮 Play State activé - Niveau', this.level);
+        console.log('Play State activé - Niveau', this.level);
         this.reset();
     }
 
     reset() {
-        // Reset du joueur
         this.player = new Player(100, 320);
-        
-        // Reset obstacles
         this.obstacles = [];
         
-        // Reset score (mais pas le niveau si on continue)
         this.game.scoreManager.reset();
         this.score = 0;
         this.lives = 3;
         
-        // Reset vitesse selon niveau
-        this.currentSpeed = this.baseSpeed + (this.level - 1) * 50;
+        const config = LevelConfig.getConfig(this.level);
+        this.currentSpeed = config.speed;
         
-        // Reset background
         this.backgroundX1 = 0;
         this.backgroundX2 = 800;
         this.distanceTraveled = 0;
         
-        // Premier obstacle
         this.timeSinceLastObstacle = 0;
         this.nextSpawnDelay = this.getRandomSpawnDelay();
     }
 
     getRandomSpawnDelay() {
-        // Niveau EXTRÊME : spawn ultra rapide
-        if (this.level === 4) {
-            return 0.6 + Math.random() * 0.4; // Entre 0.6 et 1.0 secondes
-        }
-        
-        const min = Math.max(1.0, this.minSpawnDelay - (this.level - 1) * 0.1);
-        const max = Math.max(2.0, this.maxSpawnDelay - (this.level - 1) * 0.2);
-        return min + Math.random() * (max - min);
+        const config = LevelConfig.getConfig(this.level);
+        return config.spawnDelayMin + Math.random() * (config.spawnDelayMax - config.spawnDelayMin);
     }
 
     update(deltaTime) {
         if (!this.player) return;
 
-        // Gérer la transition de niveau - NOUVEAU
+        this.game.inputManager.update(deltaTime);
+        
         if (this.isLevelTransition) {
             this.transitionTimer += deltaTime;
             
-            // Pas de spawn d'obstacles pendant la transition
-            // Pas de update des entités pendant la transition
-            
             if (this.transitionTimer >= this.transitionDuration) {
-                // Fin de la transition
                 this.isLevelTransition = false;
                 this.level = this.nextLevel;
                 this.transitionTimer = 0;
-                console.log('✅ Niveau', this.level, 'activé !');
+                
+                const config = LevelConfig.getConfig(this.level);
+                this.currentSpeed = config.speed;
+                
+                console.log('Niveau', this.level, 'activé !');
             }
             
-            // On continue quand même à update le joueur et les obstacles existants
             this.player.update(deltaTime);
             this.obstacles.forEach(obstacle => {
                 obstacle.velocityX = -this.currentSpeed;
                 obstacle.update(deltaTime);
             });
             
-            // Background scrolling continue
             this.backgroundX1 -= this.backgroundSpeed * deltaTime;
             this.backgroundX2 -= this.backgroundSpeed * deltaTime;
             
             if (this.backgroundX1 <= -800) this.backgroundX1 = 800;
             if (this.backgroundX2 <= -800) this.backgroundX2 = 800;
             
-            return; // Skip le reste de l'update
+            return;
         }
 
-        // Update joueur
         this.player.update(deltaTime);
 
-        // Update obstacles
         this.obstacles.forEach(obstacle => {
             obstacle.velocityX = -this.currentSpeed;
             obstacle.update(deltaTime);
         });
 
-        // Spawn nouveaux obstacles
         this.timeSinceLastObstacle += deltaTime;
         if (this.timeSinceLastObstacle >= this.nextSpawnDelay) {
             this.spawnObstacle();
@@ -170,54 +163,33 @@ export default class PlayState extends GameState {
             this.nextSpawnDelay = this.getRandomSpawnDelay();
         }
 
-        // Nettoyage obstacles hors écran
         this.obstacles = this.obstacles.filter(obstacle => {
             if (obstacle.isOffScreen(800)) {
-                // Point bonus pour avoir évité l'obstacle
-                this.addScore(50); // Augmenté pour progression plus rapide
+                this.addScore(50);
                 return false;
             }
             return true;
         });
 
-        // Collisions
         this.checkCollisions();
 
-        // Background scrolling - DOUBLE pour scroll infini
         this.backgroundX1 -= this.backgroundSpeed * deltaTime;
         this.backgroundX2 -= this.backgroundSpeed * deltaTime;
         
-        // Reset positions pour loop infini
-        if (this.backgroundX1 <= -800) {
-            this.backgroundX1 = 800;
-        }
-        if (this.backgroundX2 <= -800) {
-            this.backgroundX2 = 800;
-        }
+        if (this.backgroundX1 <= -800) this.backgroundX1 = 800;
+        if (this.backgroundX2 <= -800) this.backgroundX2 = 800;
 
-        // Calcul distance et score
         this.distanceTraveled += this.currentSpeed * deltaTime;
-        this.addScore(this.currentSpeed * deltaTime * 0.05); // Score continu
+        this.addScore(this.currentSpeed * deltaTime * 0.05);
 
-        // Augmentation progressive de la vitesse
-        this.currentSpeed += deltaTime * 5;
+        this.currentSpeed += deltaTime * 3;
 
-        let newLevel;
-        if (this.score < 500) {
-            newLevel = 1;
-        } else if (this.score < 1000) {
-            newLevel = 2;
-        } else if (this.score < 1500) {
-            newLevel = 3;
-        } else {
-            newLevel = 4; // NIVEAU EXTREME
-        }
+        const newLevel = LevelConfig.getLevelByScore(this.score);
         
-        if (newLevel > this.level && newLevel <= 4) {
+        if (newLevel > this.level && newLevel <= 5) {
             this.levelUp(newLevel);
         }
 
-        // Game Over si plus de vies
         if (this.lives <= 0 && !this.player.isDead) {
             this.player.die();
             setTimeout(() => {
@@ -229,16 +201,14 @@ export default class PlayState extends GameState {
     draw(ctx) {
         const canvas = ctx.canvas;
 
-        // Transition fluide entre backgrounds - NOUVEAU SYSTÈME
         if (this.backgroundTransitioning) {
-            this.backgroundTransitionProgress += 0.016 / this.backgroundTransitionDuration; // ~60fps
+            this.backgroundTransitionProgress += 0.016 / this.backgroundTransitionDuration;
             if (this.backgroundTransitionProgress >= 1) {
                 this.backgroundTransitioning = false;
                 this.backgroundTransitionProgress = 0;
             }
         }
 
-        // Dessiner les backgrounds avec transition
         const currentLevel = this.isLevelTransition ? this.previousLevel : this.level;
         const currentBg = this.backgroundImages[currentLevel];
         const currentBgLoaded = this.backgroundsLoaded[currentLevel];
@@ -247,8 +217,7 @@ export default class PlayState extends GameState {
             ctx.drawImage(currentBg, this.backgroundX1, 0, 800, 400);
             ctx.drawImage(currentBg, this.backgroundX2, 0, 800, 400);
             
-            // Overlay du nouveau background en fade-in
-            if (this.backgroundTransitioning && this.nextLevel <= 3) {
+            if (this.backgroundTransitioning && this.nextLevel <= 5) {
                 const nextBg = this.backgroundImages[this.nextLevel];
                 const nextBgLoaded = this.backgroundsLoaded[this.nextLevel];
                 
@@ -261,7 +230,6 @@ export default class PlayState extends GameState {
                 }
             }
         } else {
-            // Fallback gradients...
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
             
             if (currentLevel === 1) {
@@ -272,9 +240,17 @@ export default class PlayState extends GameState {
                 gradient.addColorStop(0, '#2d1b5e');
                 gradient.addColorStop(0.5, '#5a3d7a');
                 gradient.addColorStop(1, '#d4691a');
-            } else {
+            } else if (currentLevel === 3) {
                 gradient.addColorStop(0, '#8b1a1a');
                 gradient.addColorStop(0.5, '#2a0a2a');
+                gradient.addColorStop(1, '#d4691a');
+            } else if (currentLevel === 4) {
+                gradient.addColorStop(0, '#1a1a4a');
+                gradient.addColorStop(0.5, '#4a1a8b');
+                gradient.addColorStop(1, '#8b4a1a');
+            } else {
+                gradient.addColorStop(0, '#2a1a0a');
+                gradient.addColorStop(0.5, '#8b4a1a');
                 gradient.addColorStop(1, '#d4691a');
             }
             
@@ -283,7 +259,6 @@ export default class PlayState extends GameState {
             this.drawScrollingBackground(ctx);
         }
 
-        // Sol, entités, etc.
         ctx.fillStyle = '#8b6f47';
         ctx.fillRect(0, 360, canvas.width, 40);
         
@@ -302,17 +277,14 @@ export default class PlayState extends GameState {
             this.player.draw(ctx);
         }
 
-        // HUD
         this.drawHUD(ctx);
         
-        // Animation de transition de niveau - NOUVEAU
         if (this.isLevelTransition) {
             this.drawLevelTransition(ctx);
         }
     }
 
     drawScrollingBackground(ctx) {
-        // Étoiles/motifs qui défilent (fallback si pas d'image)
         ctx.save();
         ctx.fillStyle = 'rgba(212, 175, 55, 0.1)';
         
@@ -360,15 +332,10 @@ export default class PlayState extends GameState {
         
         ctx.textAlign = 'center';
         
-        // Niveau avec style spécial pour niveau 4
-        if (this.level === 4) {
-            ctx.fillStyle = '#ff0000';
-            ctx.font = 'bold 26px "Exo 2", Arial';
-            ctx.fillText(`💀 EXTRÊME 💀`, canvas.width / 2, 32);
-        } else {
-            ctx.fillStyle = '#d4af37';
-            ctx.fillText(`Niveau ${this.level}`, canvas.width / 2, 32);
-        }
+        const config = LevelConfig.getConfig(this.level);
+        ctx.fillStyle = this.level >= 4 ? '#ff0000' : '#d4af37';
+        ctx.font = this.level >= 4 ? 'bold 26px "Exo 2", Arial' : 'bold 24px "Exo 2", Arial';
+        ctx.fillText(this.level === 5 ? '🌪️ TEMPÊTE 🌪️' : `Niveau ${this.level}`, canvas.width / 2, 32);
         
         ctx.textAlign = 'right';
         ctx.fillStyle = '#e74c3c';
@@ -380,44 +347,65 @@ export default class PlayState extends GameState {
 
     spawnObstacle() {
         const x = 800 + 50;
-        const random = Math.random();
+        const config = LevelConfig.getConfig(this.level);
+        const obstacleTypes = config.obstacles;
+        const randomType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
         
-        if (this.level === 1) {
-            // Niveau 1 : seulement obstacles au sol
-            const obstacle = new Obstacle(x, 300, this.currentSpeed);
-            this.obstacles.push(obstacle);
-            
-        } else if (this.level === 2) {
-            // Niveau 2 : mélange sol + air (70% sol, 30% air)
-            if (random < 0.7) {
-                const obstacle = new Obstacle(x, 300, this.currentSpeed);
-                this.obstacles.push(obstacle);
-            } else {
-                const obstacleFlying = new ObstacleFlying(x, 200, this.currentSpeed);
-                this.obstacles.push(obstacleFlying);
-            }
-            
-        } else if (this.level === 3) {
-            // Niveau 3 : chaos ! (50% sol, 50% air)
-            if (random < 0.5) {
-                const obstacle = new Obstacle(x, 300, this.currentSpeed);
-                this.obstacles.push(obstacle);
-            } else {
-                const obstacleFlying = new ObstacleFlying(x, 180 + Math.random() * 60, this.currentSpeed);
-                this.obstacles.push(obstacleFlying);
-            }
-            
-        } else if (this.level === 4) {
-            // NIVEAU EXTRÊME : CHAOS TOTAL - NOUVEAU
-            // 40% sol, 60% air avec variations de hauteur
-            if (random < 0.4) {
-                const obstacle = new Obstacle(x, 300, this.currentSpeed);
-                this.obstacles.push(obstacle);
-            } else {
-                const obstacleFlying = new ObstacleFlying(x, 150 + Math.random() * 100, this.currentSpeed);
-                this.obstacles.push(obstacleFlying);
-            }
+        let obstacle;
+        
+        switch(randomType) {
+            case 'spike':
+                obstacle = new Obstacle(x, 300, this.currentSpeed);
+                break;
+            case 'lowBlock':
+                obstacle = new ObstacleFlying(x, 280, this.currentSpeed);
+                break;
+            case 'doubleSpike':
+                obstacle = new ObstacleDoubleSpike(x, 280, this.currentSpeed);
+                break;
+            case 'ceilingSpike':
+                obstacle = new ObstacleCeilingSpike(x, this.currentSpeed);
+                break;
+            case 'flyingCarpet':
+                obstacle = new ObstacleFlyingCarpet(x, this.currentSpeed);
+                break;
+            case 'rotatingSword':
+                obstacle = new ObstacleRotatingSword(x, 200, this.currentSpeed);
+                break;
+            case 'pendulumLantern':
+                obstacle = new ObstaclePendulumLantern(x, this.currentSpeed);
+                break;
+            case 'invertedSpike':
+                obstacle = new ObstacleInvertedSpike(x, this.currentSpeed);
+                break;
+            case 'gravityPortal':
+                obstacle = new ObstacleGravityPortal(x, this.currentSpeed);
+                break;
+            case 'movingWall':
+                obstacle = new ObstacleMovingWall(x, this.currentSpeed);
+                break;
+            case 'complexPattern':
+                obstacle = new ObstacleComplexPattern(x, this.currentSpeed);
+                break;
+            case 'sandstorm':
+                obstacle = new ObstacleSandstorm(x, this.currentSpeed);
+                break;
+            case 'mirage':
+                obstacle = new ObstacleMirage(x, 300, this.currentSpeed);
+                break;
+            case 'speedZone':
+                const type = Math.random() > 0.5 ? 'fast' : 'slow';
+                obstacle = new ObstacleSpeedZone(x, this.currentSpeed, type);
+                break;
+            case 'everything':
+                const allTypes = ['spike', 'doubleSpike', 'rotatingSword', 'gravityPortal', 'sandstorm', 'movingWall'];
+                const randomAll = allTypes[Math.floor(Math.random() * allTypes.length)];
+                return this.spawnObstacle();
+            default:
+                obstacle = new Obstacle(x, 300, this.currentSpeed);
         }
+        
+        this.obstacles.push(obstacle);
     }
 
     checkCollisions() {
@@ -431,16 +419,12 @@ export default class PlayState extends GameState {
     }
 
     hitObstacle(obstacle) {
-        // Retirer l'obstacle
         const index = this.obstacles.indexOf(obstacle);
         if (index > -1) {
             this.obstacles.splice(index, 1);
         }
 
-        // Perdre une vie
         this.lives--;
-        
-        // Feedback visuel (flash rouge)
         this.flashScreen();
 
         console.log('💥 Collision ! Vies restantes:', this.lives);
@@ -464,17 +448,14 @@ export default class PlayState extends GameState {
     levelUp(newLevel) {
         console.log('🎉 Transition vers niveau', newLevel, '!');
         
-        // Démarrer la transition
         this.isLevelTransition = true;
         this.transitionTimer = 0;
         this.nextLevel = newLevel;
         this.previousLevel = this.level;
         
-        // Démarrer transition de background
         this.backgroundTransitioning = true;
         this.backgroundTransitionProgress = 0;
         
-        // Bonus de vie tous les 2 niveaux
         if (newLevel % 2 === 0 && this.lives < 5) {
             this.lives++;
             console.log('❤️ Vie bonus !');
@@ -482,18 +463,29 @@ export default class PlayState extends GameState {
     }
 
     handleInput(inputManager) {
-        if (!this.player || this.player.isDead) return; 
-
-        // Saut
-        if (inputManager.isKeyPressed(' ') || 
-            inputManager.isKeyPressed('ArrowUp') ||
-            inputManager.mouseClicked) {
-            
-            this.player.jump();
-            inputManager.resetClick();
+        if (!this.player || this.player.isDead) return;
+    
+        // Détecte l'appui initial
+        if (inputManager.wasJustPressed()) {
+            this.player.startCharging();
         }
-
-        // Pause avec ESC (optionnel)
+    
+        // Détecte le relâchement
+        if (inputManager.wasJustReleased()) {
+            const holdTime = inputManager.getHoldTime();
+            
+            // Si appui court (< 150ms), saut normal
+            if (holdTime < 0.15) {
+                this.player.jump();
+            } else {
+                // Sinon, saut chargé selon le temps
+                const chargeRatio = inputManager.getChargeRatio();
+                this.player.chargedJump(chargeRatio);
+            }
+            
+            inputManager.reset();
+        }
+    
         if (inputManager.isKeyPressed('Escape')) {
             console.log('Pause non implémentée');
         }
@@ -507,16 +499,12 @@ export default class PlayState extends GameState {
         const canvas = ctx.canvas;
         const progress = this.transitionTimer / this.transitionDuration;
         
-        // Overlay semi-transparent
         ctx.save();
         
-        // Fade in puis fade out
         let alpha;
         if (progress < 0.3) {
-            // Fade in rapide
             alpha = progress / 0.3;
         } else if (progress > 0.7) {
-            // Fade out
             alpha = (1 - progress) / 0.3;
         } else {
             alpha = 1;
@@ -525,35 +513,28 @@ export default class PlayState extends GameState {
         ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.7})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Texte "NIVEAU X"
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Effet de scale (zoom in/out)
         const scale = 1 + Math.sin(progress * Math.PI) * 0.3;
         
         ctx.save();
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.scale(scale, scale);
         
-        // Ombre
         ctx.shadowColor = 'rgba(212, 175, 55, 0.8)';
         ctx.shadowBlur = 20;
         
-        // Texte principal
-        ctx.fillStyle = '#d4af37';
+        const config = LevelConfig.getConfig(this.nextLevel);
+        ctx.fillStyle = this.nextLevel >= 4 ? '#ff0000' : '#d4af37';
         ctx.font = 'bold 72px "Exo 2", Arial';
         
-        let levelText = `NIVEAU ${this.nextLevel}`;
-        if (this.nextLevel === 4) {
-            levelText = 'NIVEAU EXTRÊME';
-            ctx.fillStyle = '#ff0000';
+        if (this.nextLevel >= 4) {
             ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
         }
         
-        ctx.fillText(levelText, 0, -30);
+        ctx.fillText(config.name, 0, -30);
         
-        // Sous-texte
         ctx.shadowBlur = 10;
         ctx.fillStyle = '#ffffff';
         ctx.font = '24px "Exo 2", Arial';
@@ -561,7 +542,8 @@ export default class PlayState extends GameState {
         const messages = {
             2: 'Obstacles volants !',
             3: 'Ça chauffe !',
-            4: '💀 SURVIE 💀'
+            4: '💀 SURVIE 💀',
+            5: '🌪️ CHAOS TOTAL 🌪️'
         };
         
         ctx.fillText(messages[this.nextLevel] || '', 0, 30);
