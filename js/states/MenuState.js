@@ -12,19 +12,27 @@ export default class MenuState extends GameState {
         this.backgroundImageLoaded = false;
         this.backgroundImage.onload = () => {
             this.backgroundImageLoaded = true;
-            console.log('✅ Menu background chargé');
+            console.log('Menu background chargé');
         };
     }
 
     enter() {
-        console.log('📜 Menu State activé');
         this.titleAnimation = 0;
     }
 
     update(deltaTime) {
         // Animation du titre
         this.titleAnimation += deltaTime * 2;
-    }
+
+        const isMuted = localStorage.getItem('audioMuted') === 'true';
+    
+        if (isMuted) {
+            this.game.audioManager.stopBackgroundMusic();
+            this.game.audioManager.isMuted = true;
+        } else if (!this.game.audioManager.isMusicPlaying) {
+            this.game.audioManager.playBackgroundMusic();
+        }
+        }
 
     draw(ctx) {
         const canvas = ctx.canvas;
@@ -56,7 +64,6 @@ export default class MenuState extends GameState {
         
         const titleY = 100 + Math.sin(this.titleAnimation) * 10;
         
-        // ← POLICE MODERNE ET GRANDE
         ctx.fillStyle = '#d4af37';
         ctx.font = 'bold 56px "Exo 2", Arial';
         ctx.fillText('MAROC RUNNER', canvas.width / 2, titleY);

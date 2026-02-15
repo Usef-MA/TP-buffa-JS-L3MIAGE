@@ -1,5 +1,6 @@
 import InputManager from './utils/InputManager.js';
 import ScoreManager from './utils/ScoreManager.js';
+import AudioManager from './utils/AudioManager.js';
 import MenuState from './states/MenuState.js';
 import PlayState from './states/PlayState.js';
 import GameOverState from './states/GameOverState.js';
@@ -12,6 +13,7 @@ export default class Game {
         // Managers
         this.inputManager = new InputManager();
         this.scoreManager = new ScoreManager();
+        this.audioManager = new AudioManager();
         
         // États du jeu
         this.states = {
@@ -29,6 +31,9 @@ export default class Game {
 
     init() {
         console.log('🎮 Initialisation du jeu Maroc Runner');
+        
+        // Démarrer la musique de fond
+        this.audioManager.playBackgroundMusic();
         
         // Démarrer sur le menu
         this.changeState('menu');
