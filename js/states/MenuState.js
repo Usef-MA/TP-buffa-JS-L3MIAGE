@@ -23,7 +23,16 @@ export default class MenuState extends GameState {
     update(deltaTime) {
         // Animation du titre
         this.titleAnimation += deltaTime * 2;
-    }
+
+        const isMuted = localStorage.getItem('audioMuted') === 'true';
+    
+        if (isMuted) {
+            this.game.audioManager.stopBackgroundMusic();
+            this.game.audioManager.isMuted = true;
+        } else if (!this.game.audioManager.isMusicPlaying) {
+            this.game.audioManager.playBackgroundMusic();
+        }
+        }
 
     draw(ctx) {
         const canvas = ctx.canvas;

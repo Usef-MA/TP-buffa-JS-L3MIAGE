@@ -76,9 +76,9 @@ export default class ObstacleSpeedZone extends Entity {
         
         if (collision) {
             if (this.type === 'fast') {
-                entity.velocityX = 10;
+                entity.velocityX = 5;
             } else {
-                entity.velocityX = -10;
+                entity.velocityX = -5;
             }
         }
         

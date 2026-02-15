@@ -119,6 +119,15 @@ export default class PlayState extends GameState {
     }
 
     update(deltaTime) {
+        const isMuted = localStorage.getItem('audioMuted') === 'true';
+    
+        if (isMuted) {
+            this.game.audioManager.stopBackgroundMusic();
+            this.game.audioManager.isMuted = true;
+        } else if (!this.game.audioManager.isMusicPlaying) {
+            this.game.audioManager.playBackgroundMusic();
+        }
+
         if (!this.player) return;
 
         this.game.inputManager.update(deltaTime);

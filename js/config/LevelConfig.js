@@ -13,7 +13,7 @@ export default class LevelConfig {
             speed: 350,
             spawnDelayMin: 1.2,
             spawnDelayMax: 2.0,
-            scoreThreshold: 1200,
+            scoreThreshold: 1800,
             obstacles: ['spike', 'doubleSpike', 'ceilingSpike', 'flyingCarpet']
         },
         3: {
@@ -21,7 +21,7 @@ export default class LevelConfig {
             speed: 420,
             spawnDelayMin: 0.9,
             spawnDelayMax: 1.6,
-            scoreThreshold: 2800,
+            scoreThreshold: 4500,
             obstacles: ['spike', 'rotatingSword', 'pendulumLantern', 'invertedSpike']
         },
         4: {
@@ -29,7 +29,7 @@ export default class LevelConfig {
             speed: 500,
             spawnDelayMin: 0.7,
             spawnDelayMax: 1.3,
-            scoreThreshold: 4100,
+            scoreThreshold: 6700,
             obstacles: ['spike', 'gravityPortal', 'movingWall']
         },
         5: {
@@ -37,7 +37,7 @@ export default class LevelConfig {
             speed: 580,
             spawnDelayMin: 0.5,
             spawnDelayMax: 1.0,
-            scoreThreshold: 6000,
+            scoreThreshold: 9000,
             obstacles: ['sandstorm', 'mirage', 'speedZone', 'doubleSpike', 'gravityPortal', 'rotatingSword', 'flyingCarpet','lowBlock', 'spike']
         }
     };
