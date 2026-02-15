@@ -11,7 +11,6 @@ import ObstacleInvertedSpike from '../entities/ObstacleInvertedSpike.js';
 import ObstaclePendulumLantern from '../entities/ObstaclePendulumLantern.js';
 import ObstacleRotatingSword from '../entities/ObstacleRotatingSword.js';
 
-import ObstacleComplexPattern from '../entities/ObstacleComplexPattern.js';
 import ObstacleGravityPortal from '../entities/ObstacleGravityPortal.js';
 import ObstacleMovingWall from '../entities/ObstacleMovingWall.js';
 
@@ -384,9 +383,6 @@ export default class PlayState extends GameState {
             case 'movingWall':
                 obstacle = new ObstacleMovingWall(x, this.currentSpeed);
                 break;
-            case 'complexPattern':
-                obstacle = new ObstacleComplexPattern(x, this.currentSpeed);
-                break;
             case 'sandstorm':
                 obstacle = new ObstacleSandstorm(x, this.currentSpeed);
                 break;
@@ -397,10 +393,6 @@ export default class PlayState extends GameState {
                 const type = Math.random() > 0.5 ? 'fast' : 'slow';
                 obstacle = new ObstacleSpeedZone(x, this.currentSpeed, type);
                 break;
-            case 'everything':
-                const allTypes = ['spike', 'doubleSpike', 'rotatingSword', 'gravityPortal', 'sandstorm', 'movingWall'];
-                const randomAll = allTypes[Math.floor(Math.random() * allTypes.length)];
-                return this.spawnObstacle();
             default:
                 obstacle = new Obstacle(x, 300, this.currentSpeed);
         }
@@ -410,35 +402,59 @@ export default class PlayState extends GameState {
 
     checkCollisions() {
         if (!this.player || this.player.isDead) return;
-
+    
         this.obstacles.forEach(obstacle => {
-            if (this.player.collidesWith(obstacle)) {
+            // Check si c'est un power-up
+            if (obstacle.isPowerUp) {
+                obstacle.collidesWith(this.player);
+                return; 
+            }
+
+            if (obstacle.collidesWith(this.player)) {
                 this.hitObstacle(obstacle);
             }
         });
     }
+    
+    
 
     hitObstacle(obstacle) {
+        if (this.player.breakShield()) {
+            // Le bouclier a protégé, on retire l'obstacle
+            const index = this.obstacles.indexOf(obstacle);
+            if (index > -1) {
+                this.obstacles.splice(index, 1);
+            }
+            
+            // Flash bleu au lieu de rouge
+            this.flashScreen('rgba(0, 200, 255, 0.5)');
+            console.log('🛡️ Bouclier brisé ! Pas de dégâts');
+            return; 
+        }
+        
+        // Pas de bouclier, dégâts normaux
         const index = this.obstacles.indexOf(obstacle);
         if (index > -1) {
             this.obstacles.splice(index, 1);
         }
-
+    
         this.lives--;
-        this.flashScreen();
-
+        this.flashScreen('rgba(255, 0, 0, 0.3)');
+    
         console.log('💥 Collision ! Vies restantes:', this.lives);
     }
+    
 
-    flashScreen() {
+    flashScreen(color = 'rgba(255, 0, 0, 0.3)') {
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
         ctx.save();
-        ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+        ctx.fillStyle = color;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.restore();
     }
+    
 
     addScore(points) {
         this.score += points;

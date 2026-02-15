@@ -21,7 +21,7 @@ export default class LevelConfig {
             speed: 420,
             spawnDelayMin: 0.9,
             spawnDelayMax: 1.6,
-            scoreThreshold: 2500,
+            scoreThreshold: 2800,
             obstacles: ['spike', 'rotatingSword', 'pendulumLantern', 'invertedSpike']
         },
         4: {
@@ -29,8 +29,8 @@ export default class LevelConfig {
             speed: 500,
             spawnDelayMin: 0.7,
             spawnDelayMax: 1.3,
-            scoreThreshold: 4500,
-            obstacles: ['spike', 'gravityPortal', 'movingWall', 'complexPattern']
+            scoreThreshold: 4100,
+            obstacles: ['spike', 'gravityPortal', 'movingWall']
         },
         5: {
             name: "TEMPÊTE FINALE",
@@ -38,7 +38,7 @@ export default class LevelConfig {
             spawnDelayMin: 0.5,
             spawnDelayMax: 1.0,
             scoreThreshold: 6000,
-            obstacles: ['sandstorm', 'mirage', 'speedZone', 'everything']
+            obstacles: ['sandstorm', 'mirage', 'speedZone', 'doubleSpike', 'gravityPortal', 'rotatingSword', 'flyingCarpet','lowBlock', 'spike']
         }
     };
 

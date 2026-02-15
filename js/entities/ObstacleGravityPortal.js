@@ -6,6 +6,7 @@ export default class ObstacleGravityPortal extends Entity {
         this.velocityX = -speed;
         this.animation = 0;
         this.hasBeenActivated = false;
+        this.isPowerUp = true;
     }
 
     update(deltaTime) {
@@ -39,7 +40,7 @@ export default class ObstacleGravityPortal extends Entity {
         ctx.font = 'bold 30px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('⚡', 0, 0);
+        ctx.fillText('🛡️', 0, 0);
         
         for (let i = 0; i < 3; i++) {
             const angle = this.animation + (i * Math.PI * 2 / 3);
@@ -47,7 +48,7 @@ export default class ObstacleGravityPortal extends Entity {
             const px = Math.cos(angle) * radius;
             const py = Math.sin(angle) * radius;
             
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.fillStyle = 'rgba(100, 200, 255, 0.8)';
             ctx.beginPath();
             ctx.arc(px, py, 3, 0, Math.PI * 2);
             ctx.fill();
@@ -73,12 +74,17 @@ export default class ObstacleGravityPortal extends Entity {
     }
 
     activateEffect(player) {
-        player.gravity *= -1;
-        player.groundY = player.gravity > 0 ? 320 : 40;
-        
-        setTimeout(() => {
-            player.gravity *= -1;
-            player.groundY = player.gravity > 0 ? 320 : 40;
-        }, 3000);
+        player.activateShield();
+        console.log('🛡️ Bouclier activé !');
+    }
+
+    // NOUVEAU : Le portail disparaît après activation
+    isOffScreen(canvasWidth) {
+        // Si activé, disparaît immédiatement
+        if (this.hasBeenActivated) {
+            return true;
+        }
+        // Sinon, comportement normal
+        return this.x + this.width < 0;
     }
 }

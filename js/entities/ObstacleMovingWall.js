@@ -5,7 +5,7 @@ export default class ObstacleMovingWall extends Entity {
         super(x, 0, 60, 360);
         this.velocityX = -speed;
         this.gapY = 120;
-        this.gapHeight = 100;
+        this.gapHeight = 110;
         this.oscillation = 0;
         this.oscillationSpeed = 2;
     }
@@ -54,17 +54,29 @@ export default class ObstacleMovingWall extends Entity {
     }
 
     collidesWith(entity) {
+        //si le joueur est dans la zone horizontale du mur
         const playerInX = entity.x + entity.width > this.x && entity.x < this.x + this.width;
         
         if (!playerInX) return false;
         
         const playerTop = entity.y;
         const playerBottom = entity.y + entity.height;
+
         const gapTop = this.gapY;
         const gapBottom = this.gapY + this.gapHeight;
         
-        const playerInGap = playerBottom > gapTop && playerTop < gapBottom;
+        // Le joueur EST dans le trou si son corps est entre gapTop et gapBottom
+        const playerInGap = (playerTop >= gapTop && playerTop < gapBottom) || 
+                            (playerBottom > gapTop && playerBottom <= gapBottom) ||
+                            (playerTop <= gapTop && playerBottom >= gapBottom);
         
-        return !playerInGap;
+        // Si le joueur est dans le trou, pas de collision
+        if (playerInGap) {
+            return false;
+        }
+        
+        // Sinon, collision avec le mur
+        return true;
     }
+    
 }
