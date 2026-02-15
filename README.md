@@ -6,7 +6,7 @@
 ## 👥 Équipe de développement
 
 **Youssef BOUROUDANE** - Développement du jeu principal, gameplay et systèmes de jeu  
-
+**Kelyan SANCHES GOMES** - Développement du jeu principal , gameplay et des pages 
 ---
 
 ## Description du projet
@@ -29,7 +29,7 @@ Le jeu mêle gameplay nerveux et patrimoine culturel marocain. Chaque élément 
 - **types d'obstacles différents** (pics, murs mobiles, etc.)
 
 ### Interface utilisateur
-- **Menu principal** avec navigation interactive
+- **Menu principal** point d'entrée avec navigation interactive
 - **Écran de jeu** avec HUD (score, niveau, vies)
 - **Écran Game Over** avec affichage des scores
 - **Écran des meilleurs scores (High Scores)**
@@ -323,4 +323,5 @@ kelyan.sanches-gomes@etu.univ-cotedazur.fr
 
 **Date de rendu :** 15 février 2025  
 **Cours :** HTML5 Coding & Canvas - Michel Buffa
+
 
