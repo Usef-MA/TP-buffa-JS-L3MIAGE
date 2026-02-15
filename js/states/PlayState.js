@@ -361,7 +361,7 @@ export default class PlayState extends GameState {
                 obstacle = new ObstacleFlying(x, 280, this.currentSpeed);
                 break;
             case 'doubleSpike':
-                obstacle = new ObstacleDoubleSpike(x, 280, this.currentSpeed);
+                obstacle = new ObstacleDoubleSpike(x, 300, this.currentSpeed);
                 break;
             case 'ceilingSpike':
                 obstacle = new ObstacleCeilingSpike(x, this.currentSpeed);

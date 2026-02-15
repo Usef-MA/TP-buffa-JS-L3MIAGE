@@ -4,21 +4,22 @@ export default class ObstaclePendulumLantern extends Entity {
     constructor(x, speed) {
         super(x, 0, 30, 150);
         this.velocityX = -speed;
-        this.angle = Math.PI / 6;
-        this.angleSpeed = 2;
+        this.angle = Math.PI / 10; 
+        this.angleSpeed = 1.5;
         this.swingDirection = 1;
         this.ropeLength = 100;
+        this.maxAngle = Math.PI / 8; 
     }
 
     update(deltaTime) {
         super.update(deltaTime);
         this.angle += this.angleSpeed * this.swingDirection * deltaTime;
         
-        if (this.angle > Math.PI / 3) {
-            this.angle = Math.PI / 3;
+        if (this.angle > this.maxAngle) {
+            this.angle = this.maxAngle;
             this.swingDirection = -1;
-        } else if (this.angle < -Math.PI / 3) {
-            this.angle = -Math.PI / 3;
+        } else if (this.angle < -this.maxAngle) {
+            this.angle = -this.maxAngle;
             this.swingDirection = 1;
         }
     }

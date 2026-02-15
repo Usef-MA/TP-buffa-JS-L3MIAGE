@@ -2,7 +2,7 @@ import Entity from './Entity.js';
 
 export default class ObstacleCeilingSpike extends Entity {
     constructor(x, speed) {
-        super(x, 0, 40, 60);
+        super(x, 0, 60, 100);
         this.velocityX = -speed;
         this.pulseAnimation = 0;
     }
