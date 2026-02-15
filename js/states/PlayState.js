@@ -84,6 +84,9 @@ export default class PlayState extends GameState {
         this.backgroundTransitioning = false;
         this.backgroundTransitionDuration = 1.5;
         this.previousLevel = 1;
+
+        // ✅ Création initiale avec audioManager
+        this.player = new Player(100, 320, game.audioManager);
     }
 
     enter() {
@@ -92,7 +95,8 @@ export default class PlayState extends GameState {
     }
 
     reset() {
-        this.player = new Player(100, 320);
+        // ✅ CORRECTION ICI : Passer game.audioManager lors du reset
+        this.player = new Player(100, 320, this.game.audioManager);
         this.obstacles = [];
         
         this.game.scoreManager.reset();

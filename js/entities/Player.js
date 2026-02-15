@@ -2,8 +2,10 @@ import ParticleSystem from '../effects/ParticleSystem.js';
 import Entity from './Entity.js';
 
 export default class Player extends Entity {
-    constructor(x, y) {
+    constructor(x, y, audioManager = null) {
         super(x, y, 40, 40); 
+        
+        this.audioManager = audioManager; // Référence au gestionnaire audio
         
         this.isJumping = false;
         this.jumpForce = -700; // Saut normal
@@ -36,6 +38,12 @@ export default class Player extends Entity {
         if (!this.isJumping && !this.isDead) {
             this.velocityY = this.jumpForce;
             this.isJumping = true;
+            
+            // Jouer le son de saut
+            if (this.audioManager) {
+                this.audioManager.playJumpSound();
+            }
+            
             console.log('🔵 Saut normal');
         }
     }
@@ -55,6 +63,12 @@ export default class Player extends Entity {
             this.velocityY = force;
             this.isJumping = true;
             this.isCharging = false;
+            
+            // Jouer le son de saut
+            if (this.audioManager) {
+                this.audioManager.playJumpSound();
+            }
+            
             console.log(`🟢 Saut chargé ${Math.round(chargeRatio * 100)}% (force: ${Math.round(force)})`);
         }
     }
