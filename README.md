@@ -52,35 +52,72 @@ Le jeu mêle gameplay nerveux et patrimoine culturel marocain. Chaque élément 
 ### Structure du projet
 ```
 TP-BUFFA-JS-L3MIAGE/
-├── assets/                    # Ressources (images, sons)
-├── css/
-│   ├── menu.css              # Styles menu principal
-│   ├── game.css              # Styles page de jeu
-│   └── styles.css            # Styles communs
-├── js/
-│   ├── config/
-│   │   └── LevelConfig.js    # Configuration des niveaux
-│   ├── effects/
-│   │   └── ParticleSystem.js # Système de particules
-│   ├── entities/
-│   │   ├── Entity.js         # Classe de base
-│   │   ├── Player.js         # Joueur
-│   │   ├── Obstacle.js       # Obstacles
-│   │   └── ...
-│   ├── states/
-│   │   ├── GameState.js      # Classe de base des états
-│   │   ├── MenuState.js      # État menu
-│   │   ├── PlayState.js      # État jeu
-│   │   └── GameOverState.js  # État game over
-│   ├── utils/
-│   │   ├── InputManager.js   # Gestion centralisée des inputs
-│   │   ├── ScoreManager.js   # Gestion des scores
-│   │   └── AudioManager.js   # Gestion de l'audio
-│   ├── Game.js               # Classe principale du jeu
-│   └── main.js               # Point d'entrée
-├── game.html                 # Page de jeu
-├── menu.html                 # Page menu principal
-└── README.md
+│   .DS_Store                    # Fichier système macOS (à ignorer)
+│   .gitignore                   # Liste des fichiers à exclure de Git
+│   game.html                    # Page principale du jeu (canvas + gameplay)
+│   menu.html                    # Page du menu principal
+│   options.html                 # Page des paramètres (son activé/désactivé)
+│   README.md                    # Documentation du projet
+│   tutorial.html                # Page tutoriel (comment jouer)
+│
+├───assets                       # Ressources multimédias
+│       .DS_Store
+│       background.mp3           # Musique de fond du jeu
+│       carre.png                # Image du joueur (carré)
+│       gameover-bg.png          # Fond d'écran Game Over
+│       imagebouclier.png        # Image du bouclier (tutoriel)
+│       level1-bg.png            # Fond niveau 1
+│       level2-bg.png            # Fond niveau 2
+│       level3-bg.png            # Fond niveau 3
+│       menu-bg.png              # Fond du menu
+│       obstacle.png             # Image d'obstacle
+│       saut.mp3                 # Son de saut
+│
+├───css                          # Feuilles de style
+│       game.css                 # Style du jeu (canvas, HUD, animations)
+│       menu.css                 # Style du menu principal
+│       options.css              # Style de la page paramètres
+│       tutorial.css             # Style de la page tutoriel
+│
+└───js                           # Code JavaScript
+    │   .DS_Store
+    │   Game.js                  # Classe principale (gestion des états, boucle de jeu)
+    │   main.js                  # Point d'entrée (initialisation du jeu)
+    │
+    ├───config                   # Configuration du jeu
+    │       LevelConfig.js       # Paramètres des niveaux (vitesse, obstacles, scores)
+    │       options.js           # Logique de la page paramètres
+    │
+    ├───effects                  # Effets visuels
+    │       ParticleSystem.js    # Système de particules (charge du saut)
+    │
+    ├───entities                 # Entités du jeu (joueur, obstacles)
+    │       Entity.js            # Classe de base (position, hitbox, collision)
+    │       Obstacle.js          # Obstacle basique (spike au sol)
+    │       ObstacleCeilingSpike.js      # Spike tombant du plafond
+    │       ObstacleDoubleSpike.js       # Deux spikes (haut et bas)
+    │       ObstacleFlying.js            # Obstacle volant
+    │       ObstacleFlyingCarpet.js      # Tapis volant
+    │       ObstacleGravityPortal.js     # Portail donnant un bouclier
+    │       ObstacleInvertedSpike.js     # Spike inversé (plafond)
+    │       ObstacleMirage.js            # Mirage (obstacle faux)
+    │       ObstacleMovingWall.js        # Mur avec trou mobile
+    │       ObstaclePendulumLantern.js   # Lanterne pendule
+    │       ObstacleRotatingSword.js     # Obstacle qui tourne
+    │       ObstacleSandstorm.js         # Tempête de sable
+    │       ObstacleSpeedZone.js         # Zone qui accélère/ralentit
+    │       Player.js            # Joueur (saut, saut chargé, bouclier)
+    │
+    ├───states                   # États du jeu (pattern State)
+    │       GameOverState.js     # État Game Over (affichage score, rejouer)
+    │       GameState.js         # Classe abstraite de base pour tous les états
+    │       MenuState.js         # État Menu principal
+    │       PlayState.js         # État de jeu (gameplay, collisions, spawn)
+    │
+    └───utils                    # Utilitaires
+            AudioManager.js      # Gestion du son (musique, effets)
+            InputManager.js      # Gestion des entrées clavier (saut, charge)
+            ScoreManager.js      # Gestion des score
 ```
 
 ###  Bonnes pratiques respectées
@@ -135,8 +172,8 @@ croissant de lune, style minimaliste pour jeu vidéo"
 - Tous les autres systèmes ont été développés manuellement en suivant les bonnes pratiques du cours
 
 ### Audio
-- **Musique de fond** : `background.mp3` (source : [à compléter si source externe])
-- **Son de saut** : `saut.mp3` (source : [à compléter si source externe])
+- **Musique de fond** : `background.mp3` 
+- **Son de saut** : `saut.mp3` 
 
 ###  Références du cours
 - **GitHub du cours** : https://github.com/micbuffa/L3MiageIntroJS2025_2026
@@ -279,7 +316,11 @@ Université Côte d'Azur
 Étudiant L3 MIAGE - Université Côte d'Azur  
 youssef.bouroudane@etu.unice.fr
 
+**Kelyan SANCHES GOMES**  
+Étudiant L3 MIAGE - Université Côte d'Azur  
+kelyan.sanches-gomes@etu.univ-cotedazur.fr
 ---
 
 **Date de rendu :** 15 février 2025  
 **Cours :** HTML5 Coding & Canvas - Michel Buffa
+
